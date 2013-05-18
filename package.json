@@ -1,0 +1,20 @@
+{
+  "name": "node-q-squared",
+  "version": "0.0.0",
+  "description": "Promise based parallel processing via Q, Q-Connection, and Qx for node",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:mastercactapus/node-q-squared.git"
+  },
+  "keywords": [
+    "promise",
+    "parallel",
+    "q"
+  ],
+  "author": "Nathan Caza",
+  "license": "MIT"
+}
