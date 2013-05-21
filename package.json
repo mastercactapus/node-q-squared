@@ -16,5 +16,13 @@
     "q"
   ],
   "author": "Nathan Caza",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "qx": "~0.2.4",
+    "q": "~0.9.3",
+    "q-connection": "~0.5.3",
+  },
+  "devDependencies": {
+    "coffee-script": "~1.6.2"
+  }
 }
