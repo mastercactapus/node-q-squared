@@ -16,7 +16,7 @@ _extend = (baseObject, extendWith...) ->
 class qSquared
     @defaults:
         concurrent: os.cpus().length
-    initialize: (@filePath, options) ->
+    constructor: (@filePath, options) ->
         @options = _extend({}, qSquared.defaults, options)
         @workerQueue = Queue()
         @workers = for n in [1..@options.concurrent]
@@ -34,7 +34,7 @@ class qSquared
                     result
 
 class Worker extends Connection
-    initialize: (@filePath, options) ->
+    constructor: (@filePath, options) ->
         @proc = fork(@filePath,options)
         super @proc
 
@@ -42,4 +42,4 @@ class qSquared.Child
     initialize: (args...) ->
         Connection(process, args...)
 
-modules.exports = qSquared
+module.exports = qSquared
