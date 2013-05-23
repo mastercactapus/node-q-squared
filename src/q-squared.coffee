@@ -10,9 +10,7 @@ Q.longStackJumpLimit = 0;
 _extend = (baseObject, extendWith...) ->
   for object in extendWith
     for key,val of object
-      if val instanceof Object
-        baseObject[key] = _extend(baseObject[key] ? {}, val)
-      else baseObject[key] = val
+      baseObject[key] = val
   baseObject
 
 class qSquared extends Qx
