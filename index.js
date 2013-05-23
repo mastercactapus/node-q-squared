@@ -1,1 +1,2 @@
-module.exports = require('./lib/q-squared');
+require('coffee-script');
+module.exports = require('./src/q-squared.coffee');
