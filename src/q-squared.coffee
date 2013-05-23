@@ -41,8 +41,8 @@ class Worker
         Qx.map args, (arg) ->
             @conn.invoke(method, arg)
 
-class qSquared.Child
-    initialize: (args...) ->
+qSquared.Child = (args...) ->
         Connection(process, args...)
+
 
 module.exports = qSquared
