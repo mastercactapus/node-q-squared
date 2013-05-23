@@ -5,6 +5,8 @@ Qx = require('qx')
 os = require('os')
 fork = require('child_process').fork
 
+Q.longStackJumpLimit = 0;
+
 _extend = (baseObject, extendWith...) ->
   for object in extendWith
     for key,val of object
