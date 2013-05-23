@@ -13,7 +13,7 @@ _extend = (baseObject, extendWith...) ->
       baseObject[key] = val
   baseObject
 
-class qSquared extends Qx
+class qSquared
     @defaults:
         concurrent: os.cpus().length
     initialize: (@filePath, options) ->
