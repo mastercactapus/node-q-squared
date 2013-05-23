@@ -32,6 +32,17 @@ class qSquared
                 .spread (worker, result) =>
                     @workerQueue.put(worker)
                     result
+class ArrayData
+    constructor: (array) ->
+        @index = 0
+        @array = Q(array)
+    nextChunk: (size) ->
+        index = @index
+        @index += size
+        Q.when @array, (array) =>
+            throw "Array Empty" if array.length === 0
+            @array = array.slice(size)
+            [array.slice(0,size), index]
 
 class Worker
     constructor: (@filePath, options) ->
