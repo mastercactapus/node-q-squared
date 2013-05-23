@@ -33,10 +33,13 @@ class qSquared
                     @workerQueue.put(worker)
                     result
 
-class Worker extends Connection
+class Worker
     constructor: (@filePath, options) ->
         @proc = fork(@filePath,options)
-        super @proc
+        @conn = Connection(@proc)
+    invoke: (method, args) ->
+        Qx.map args, (arg) ->
+            @conn.invoke(method, arg)
 
 class qSquared.Child
     initialize: (args...) ->
