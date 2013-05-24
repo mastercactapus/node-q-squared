@@ -6,10 +6,11 @@ workerMod = require(workerFile)
 
 Connection process,
 	map: (arrayData, methodName, extraArgs) ->
-		Q.all arrayData.map (data) ->
-			timestamp = new Date()
-			workerMod[methodName](data, extraArgs...).then (result) ->
-				{
-					elapsed: new Date() - timestamp,
-					result
-				}
+		timestamp = new Date()
+		Q.all( arrayData.map (data) ->
+			workerMod[methodName](data, extraArgs...)
+		).then (results) ->
+			{
+				elapsed: new Date() - timestamp
+				value: results
+			}

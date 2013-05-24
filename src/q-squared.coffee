@@ -34,18 +34,16 @@ class qSquared
             data = new ArrayData(array)
             _doChunk = =>
                 localChunkSize = chunkSize
-                console.log chunkSize
                 [chunk, index] = data.get(localChunkSize)
                 if finished is retr.length
                     return deferred.resolve(retr)
                 return unless chunk? and index?
-                @_procChunk(chunk, methodName, extraArgs).spread (result) =>
-                    elapsed = result.totalTime
-                    console.log 'elapsed',elapsed
+                @_procChunk(chunk, methodName, extraArgs).spread (totalTime, procTime, result) =>
+                    elapsed = procTime
                     elapsed = 1 if elapsed is 0
-                    if elapsed < 50 or elapsed > 250
-                        chunkSize = Math.max(Math.floor(localChunkSize * 50 / elapsed),1)
-                    [].splice.apply(retr,[index,chunk.length].concat(result.result))
+                    if elapsed < 150 or elapsed > 1000
+                        chunkSize = Math.max(Math.floor(localChunkSize * 150 / elapsed),1)
+                    [].splice.apply(retr,[index,chunk.length].concat(result))
                     finished += chunk.length
                     _doChunk()
             for n in [1..@options.concurrent]
@@ -53,15 +51,15 @@ class qSquared
         deferred.promise
     _procChunk: (chunk, methodName, extraArgs) =>
         @workerQueue.get()
-        .then (worker) =>
+        .then( (worker) =>
             [new Date(), worker, worker.map(chunk, methodName, extraArgs)]
-        .spread (timestamp, worker, result) =>
+        ).spread (timestamp, worker, results) =>
             @workerQueue.put(worker)
-            {
-                totalTime: new Date() - timestamp
-                result: result.result
-                procTime: result.elapsed
-            }
+            [
+                new Date() - timestamp
+                results.elapsed
+                results.value
+            ]
     close: ->
         for worker in @workers
             worker.close()
