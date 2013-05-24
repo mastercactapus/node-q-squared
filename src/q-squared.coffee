@@ -76,8 +76,11 @@ class Worker
     invoke: (methodName, args) ->
         @conn.invoke('__map', methodName, args)
 
-qSquared.Child = (args...) ->
-        Connection(process, args...)
+qSquared.Child = (methods) ->
+    _extend methods,
+        __map: (methodName, array) ->
+            array.map @[methodName]
+    Connection(process, methods)
 
 
 module.exports = qSquared
