@@ -1,6 +1,6 @@
 {
   "name": "node-q-squared",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Promise based parallel processing for node.",
   "main": "index.js",
   "scripts": {
