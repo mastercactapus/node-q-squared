@@ -1,7 +1,6 @@
 Q = require('q')
 Queue = require('q/queue')
 Connection = require('q-connection')
-Qx = require('qx')
 os = require('os')
 fork = require('child_process').fork
 

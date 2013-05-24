@@ -18,7 +18,6 @@
   "author": "Nathan Caza",
   "license": "MIT",
   "dependencies": {
-    "qx": "~0.2.4",
     "q": "~0.9.3",
     "q-connection": "~0.5.3",
   },
