@@ -71,17 +71,12 @@ class ArrayData
 
 class Worker
     constructor: (@filePath, options) ->
-        @proc = fork(@filePath,options)
+        wrapperPath = require.resolve('./child')
+        @proc = fork(wrapperPath, [@filePath], options)
         @conn = Connection(@proc)
     invoke: (methodName, args) ->
-        @conn.invoke('__map', methodName, args)
+        @conn.invoke('map', methodName, args)
     close: ->
         @proc.kill()
-
-qSquared.Child = (methods) ->
-    _extend methods,
-        __map: (methodName, array) ->
-            array.map @[methodName]
-    Connection(process, methods)
 
 module.exports = qSquared
