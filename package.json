@@ -1,7 +1,7 @@
 {
   "name": "node-q-squared",
   "version": "0.0.0",
-  "description": "Promise based parallel processing via Q, Q-Connection, and Qx for node",
+  "description": "Promise based parallel processing for node.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
