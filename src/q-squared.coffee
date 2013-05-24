@@ -18,8 +18,11 @@ class qSquared
     constructor: (@filePath, options) ->
         @options = _extend({}, qSquared.defaults, options)
         @workerQueue = Queue()
+        @workers = []
         for n in [1..@options.concurrent]
-            @workerQueue.put new Worker(@filePath,options)
+            worker = new Worker(@filePath,options)
+            @workerQueue.put worker
+            @workers.push worker
         @
     map: (array, methodName) ->
         retr = Q.defer()
@@ -52,6 +55,9 @@ class qSquared
         .spread (timestamp, worker, result) =>
             @workerQueue.put(worker)
             [new Date() - timestamp, result]
+    close: ->
+        for worker in @workers
+            worker.close()
 
 class ArrayData
     constructor: (@array) ->
@@ -69,12 +75,13 @@ class Worker
         @conn = Connection(@proc)
     invoke: (methodName, args) ->
         @conn.invoke('__map', methodName, args)
+    close: ->
+        @proc.kill()
 
 qSquared.Child = (methods) ->
     _extend methods,
         __map: (methodName, array) ->
             array.map @[methodName]
     Connection(process, methods)
-
 
 module.exports = qSquared
