@@ -24,37 +24,44 @@ class qSquared
             @workerQueue.put worker
             @workers.push worker
         @
-    map: (array, methodName) ->
-        retr = Q.defer()
+    map: (array, methodName, extraArgs...) ->
+        deferred = Q.defer()
         chunkSize = 1
-        result = []
+        retr = []
         finished = 0
         Q(array).then (array) =>
-            result.length = array.length
+            retr.length = array.length
             data = new ArrayData(array)
             _doChunk = =>
                 localChunkSize = chunkSize
+                console.log chunkSize
                 [chunk, index] = data.get(localChunkSize)
-                if finished is result.length
-                    return retr.resolve(result)
+                if finished is retr.length
+                    return deferred.resolve(retr)
                 return unless chunk? and index?
-                @_procChunk(chunk, methodName).spread (elapsed, returnedVal) =>
+                @_procChunk(chunk, methodName, extraArgs).spread (result) =>
+                    elapsed = result.totalTime
+                    console.log 'elapsed',elapsed
                     elapsed = 1 if elapsed is 0
                     if elapsed < 50 or elapsed > 250
-                        chunkSize = Math.floor(localChunkSize * 50 / elapsed)
-                    [].splice.apply(result,[index,chunk.length].concat(returnedVal))
+                        chunkSize = Math.max(Math.floor(localChunkSize * 50 / elapsed),1)
+                    [].splice.apply(retr,[index,chunk.length].concat(result.result))
                     finished += chunk.length
                     _doChunk()
             for n in [1..@options.concurrent]
                 _doChunk()
-        retr.promise
-    _procChunk: (chunk, methodName) =>
+        deferred.promise
+    _procChunk: (chunk, methodName, extraArgs) =>
         @workerQueue.get()
         .then (worker) =>
-            [new Date(), worker, worker.invoke(methodName, chunk)]
+            [new Date(), worker, worker.map(chunk, methodName, extraArgs)]
         .spread (timestamp, worker, result) =>
             @workerQueue.put(worker)
-            [new Date() - timestamp, result]
+            {
+                totalTime: new Date() - timestamp
+                result: result.result
+                procTime: result.elapsed
+            }
     close: ->
         for worker in @workers
             worker.close()
@@ -74,8 +81,8 @@ class Worker
         wrapperPath = require.resolve('./child')
         @proc = fork(wrapperPath, [@filePath], options)
         @conn = Connection(@proc)
-    invoke: (methodName, args) ->
-        @conn.invoke('map', methodName, args)
+    map: (chunkData, methodName, extraArgs) ->
+        @conn.invoke('map', chunkData, methodName, extraArgs)
     close: ->
         @proc.kill()
 
