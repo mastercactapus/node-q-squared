@@ -60,24 +60,21 @@ class qSquared
         res.promise
 
 class ArrayData
-    constructor: (array) ->
+    constructor: (@array) ->
         @index = 0
-        @array = Q(array)
-    nextChunk: (size) ->
-        index = @index
-        @index += size
-        Q.when @array, (array) =>
-            throw "Array Empty" if array.length === 0
-            @array = array.slice(size)
-            [array.slice(0,size), index]
+    get: (size) ->
+        return [null,null] if @array.length is @index
+        end = Math.min(@array.length, @index + size)
+        retr = [@array.slice(@index,end), @index]
+        @index=end
+        retr
 
 class Worker
     constructor: (@filePath, options) ->
         @proc = fork(@filePath,options)
         @conn = Connection(@proc)
-    invoke: (method, args) ->
-        Qx.map args, (arg) ->
-            @conn.invoke(method, arg)
+    invoke: (methodName, args) ->
+        @conn.invoke('__map', methodName, args)
 
 qSquared.Child = (args...) ->
         Connection(process, args...)
