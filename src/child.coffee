@@ -1,5 +1,6 @@
 Q = require 'q'
 Connection = require 'q-connection'
+Q.longStackJumpLimit = 0
 
 workerFile = process.argv[2]
 workerMod = require(workerFile)
