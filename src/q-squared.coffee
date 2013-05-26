@@ -19,16 +19,18 @@ class qSquared
         @options = _extend({}, qSquared.defaults, options)
         @workerQueue = Queue()
         @workers = []
+        @workerCount = 0
         for n in [1..@options.concurrent]
             worker = new Worker(@filePath,options)
-            @workers.push worker
             @workerQueue.put worker.get()
+            @workerCount++
         @
     map: (array, methodName, extraArgs...) ->
         deferred = Q.defer()
         chunkSize = 1
         retr = []
         finished = 0
+        throw "No available workers" if @workerCount is 0
         Q(array).then (array) =>
             retr.length = array.length
             data = new ArrayData(array)
@@ -61,8 +63,10 @@ class qSquared
                 results.value
             ]
     close: ->
-        for worker in @workers
-            worker.close()
+        while @workerCount > 0
+            @workerQueue.get().then (worker) ->
+                worker.close()
+            @workerCount--
 
 class ArrayData
     constructor: (@array) ->
