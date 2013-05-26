@@ -5,7 +5,8 @@ Q.longStackJumpLimit = 0
 workerFile = process.argv[2]
 workerMod = require(workerFile)
 
-Connection process,
+
+parent = Connection process,
 	map: (arrayData, methodName, extraArgs) ->
 		timestamp = new Date()
 		Q.all( arrayData.map (data) ->
@@ -15,3 +16,7 @@ Connection process,
 				elapsed: new Date() - timestamp
 				value: results
 			}
+
+
+parent.invoke 'ready'
+
