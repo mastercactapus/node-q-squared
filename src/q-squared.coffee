@@ -26,7 +26,6 @@ class qSquared
             @workerCount++
         @
     map: (array, methodName, extraArgs...) ->
-        deferred = Q.defer()
         chunkSize = 1
         retr = []
         finished = 0
@@ -38,7 +37,7 @@ class qSquared
                 localChunkSize = chunkSize
                 [chunk, index] = data.get(localChunkSize)
                 if finished is retr.length
-                    return deferred.resolve(retr)
+                    return retr
                 return unless chunk? and index?
                 @_procChunk(chunk, methodName, extraArgs).spread (totalTime, procTime, result) =>
                     elapsed = procTime
@@ -48,9 +47,10 @@ class qSquared
                     [].splice.apply(retr,[index,chunk.length].concat(result))
                     finished += chunk.length
                     _doChunk()
-            for n in [1..@options.concurrent]
-                _doChunk()
-        deferred.promise
+            Q.all([1..@workerCount].map(_doChunk)).then (workerChainResult) ->
+                actualResult = workerChainResult.filter (res) ->
+                    res?
+                return actualResult[0]
     _procChunk: (chunk, methodName, extraArgs) =>
         myWorker = null
         @workerQueue.get()
