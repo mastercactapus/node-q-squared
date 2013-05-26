@@ -52,16 +52,19 @@ class qSquared
                 _doChunk()
         deferred.promise
     _procChunk: (chunk, methodName, extraArgs) =>
+        myWorker = null
         @workerQueue.get()
         .then( (worker) =>
+            myWorker = worker
             [new Date(), worker, worker.map(chunk, methodName, extraArgs)]
-        ).spread (timestamp, worker, results) =>
-            @workerQueue.put(worker)
+        ).spread( (timestamp, worker, results) =>
             [
                 new Date() - timestamp
                 results.elapsed
                 results.value
             ]
+        ).finally =>
+            @workerQueue.put(myWorker) if myWorker?
     close: ->
         while @workerCount > 0
             @workerQueue.get().then (worker) ->
