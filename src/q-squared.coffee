@@ -21,8 +21,8 @@ class qSquared
         @workers = []
         for n in [1..@options.concurrent]
             worker = new Worker(@filePath,options)
-            @workerQueue.put worker
             @workers.push worker
+            @workerQueue.put worker.get()
         @
     map: (array, methodName, extraArgs...) ->
         deferred = Q.defer()
@@ -75,10 +75,16 @@ class ArrayData
         retr
 
 class Worker
+    get: ->
+        @init.promise
+    _ready: =>
+        @init.resolve(@)
+        null
     constructor: (@filePath, options) ->
         wrapperPath = require.resolve('./child')
         @proc = fork(wrapperPath, [@filePath], options)
-        @conn = Connection(@proc)
+        @init = Q.defer()
+        @conn = Connection(@proc, {ready: @_ready})
     map: (chunkData, methodName, extraArgs) ->
         @conn.invoke('map', chunkData, methodName, extraArgs)
     close: ->
