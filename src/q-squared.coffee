@@ -26,19 +26,22 @@ class qSquared
             @workerCount++
         @
     map: (array, methodName, extraArgs...) ->
+        deadEnd = {}
         chunkSize = 1
         retr = []
+        reject = null
         finished = 0
         throw "No available workers" if @workerCount is 0
         Q(array).then (array) =>
             retr.length = array.length
             data = new ArrayData(array)
             _doChunk = =>
+                return deadEnd if reject?
                 localChunkSize = chunkSize
                 [chunk, index] = data.get(localChunkSize)
                 if finished is retr.length
                     return retr
-                return unless chunk? and index?
+                return deadEnd unless chunk? and index?
                 @_procChunk(chunk, methodName, extraArgs).spread (totalTime, procTime, result) =>
                     elapsed = procTime
                     elapsed = 1 if elapsed is 0
@@ -49,8 +52,10 @@ class qSquared
                     _doChunk()
             Q.all([1..@workerCount].map(_doChunk)).then (workerChainResult) ->
                 actualResult = workerChainResult.filter (res) ->
-                    res?
+                    res isnt deadEnd
                 return actualResult[0]
+
+  
     _procChunk: (chunk, methodName, extraArgs) =>
         myWorker = null
         @workerQueue.get()
