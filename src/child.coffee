@@ -17,6 +17,10 @@ parent = Connection process,
 				value: results
 			}
 
+	die: ->
+		process.nextTick(process.exit)
+
+
 
 parent.invoke 'ready'
 

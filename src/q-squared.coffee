@@ -94,7 +94,8 @@ class Worker
         @conn = Connection(@proc, {ready: @_ready})
     map: (chunkData, methodName, extraArgs) ->
         @conn.invoke('map', chunkData, methodName, extraArgs)
+
     close: ->
-        @proc.kill()
+        @conn.invoke('die')
 
 module.exports = qSquared
