@@ -19,25 +19,29 @@ class qSquared
         @options = _extend({}, qSquared.defaults, options)
         @workerQueue = Queue()
         @workers = []
+        @workerCount = 0
         for n in [1..@options.concurrent]
             worker = new Worker(@filePath,options)
-            @workerQueue.put worker
-            @workers.push worker
+            @workerQueue.put worker.get()
+            @workerCount++
         @
     map: (array, methodName, extraArgs...) ->
-        deferred = Q.defer()
+        deadEnd = {}
         chunkSize = 1
         retr = []
+        reject = null
         finished = 0
+        throw "No available workers" if @workerCount is 0
         Q(array).then (array) =>
             retr.length = array.length
             data = new ArrayData(array)
             _doChunk = =>
+                return deadEnd if reject?
                 localChunkSize = chunkSize
                 [chunk, index] = data.get(localChunkSize)
                 if finished is retr.length
-                    return deferred.resolve(retr)
-                return unless chunk? and index?
+                    return retr
+                return deadEnd unless chunk? and index?
                 @_procChunk(chunk, methodName, extraArgs).spread (totalTime, procTime, result) =>
                     elapsed = procTime
                     elapsed = 1 if elapsed is 0
@@ -46,23 +50,31 @@ class qSquared
                     [].splice.apply(retr,[index,chunk.length].concat(result))
                     finished += chunk.length
                     _doChunk()
-            for n in [1..@options.concurrent]
-                _doChunk()
-        deferred.promise
+            Q.all([1..@workerCount].map(_doChunk)).then (workerChainResult) ->
+                actualResult = workerChainResult.filter (res) ->
+                    res isnt deadEnd
+                return actualResult[0]
+
+  
     _procChunk: (chunk, methodName, extraArgs) =>
+        myWorker = null
         @workerQueue.get()
         .then( (worker) =>
+            myWorker = worker
             [new Date(), worker, worker.map(chunk, methodName, extraArgs)]
-        ).spread (timestamp, worker, results) =>
-            @workerQueue.put(worker)
+        ).spread( (timestamp, worker, results) =>
             [
                 new Date() - timestamp
                 results.elapsed
                 results.value
             ]
+        ).finally =>
+            @workerQueue.put(myWorker) if myWorker?
     close: ->
-        for worker in @workers
-            worker.close()
+        while @workerCount > 0
+            @workerQueue.get().then (worker) ->
+                worker.close()
+            @workerCount--
 
 class ArrayData
     constructor: (@array) ->
@@ -75,13 +87,20 @@ class ArrayData
         retr
 
 class Worker
+    get: ->
+        @init.promise
+    _ready: =>
+        @init.resolve(@)
+        null
     constructor: (@filePath, options) ->
         wrapperPath = require.resolve('./child')
         @proc = fork(wrapperPath, [@filePath], options)
-        @conn = Connection(@proc)
+        @init = Q.defer()
+        @conn = Connection(@proc, {ready: @_ready})
     map: (chunkData, methodName, extraArgs) ->
         @conn.invoke('map', chunkData, methodName, extraArgs)
+
     close: ->
-        @proc.kill()
+        @conn.invoke('die')
 
 module.exports = qSquared
